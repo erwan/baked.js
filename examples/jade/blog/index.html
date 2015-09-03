@@ -1,0 +1,31 @@
+doctype html
+html
+  head
+    meta(charset="utf-8")
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    title Your prismic.io singlepage project
+    meta(name='description', content='')
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    meta(name='prismic-routing-pattern', content='/blog.html')
+    meta(property='og:url', content='[%= urlToHere() %]')
+    script(src='https://prismicio.github.io/baked.js/baked-0.3.0.js')
+
+    urlToHere()
+
+    urlTo('/index')
+
+    urlTo('index')
+
+
+    h1 Blog
+      script(type='text/prismic-query', data-binding='blogPosts', data-form='blog') [[:d = at(document.tags, ["Featured"])]]
+      each post in blogPosts.results
+        article
+          h2
+            a(href="[%= pathTo('post', {id: post.id}) %]") [%= post.getStructuredText(&quot;blog-post.body&quot;).getTitle().text %]
+
+          p [%= post.getStructuredText(&quot;blog-post.body&quot;).getFirstParagraph().text %]
+
+          hr
+
+    include ../_footer.html

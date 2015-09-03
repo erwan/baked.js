@@ -1,0 +1,66 @@
+doctype html
+html
+  head
+    meta(charset='utf-8')
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    title Your prismic.io singlepage project
+    meta(name='description', content='')
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    meta(name='prismic-oauth-client-id', content='UxWopwEAAPN0sBcH')
+    meta(name='prismic-routing-pattern', content='search/$typ/$tag/$page')
+    meta(name='prismic-routing-param', content='typ')
+    meta(name='prismic-routing-param', content='tag')
+    meta(name='prismic-routing-param', content='page')
+    meta(property='og:url', content='[%= urlToHere() %]')
+    script(src='https://prismicio.github.io/baked.js/baked-0.3.0.js')
+
+  body
+    script(type='text/prismic-query', data-binding='featuredProducts', data-query-orderings='[my.product.name]', data-query-page-size='1', data-query-page='$page').
+      [[:d = any(document.type, ["$typ"])][:d = at(document.tags, ["$tag"])]]
+
+    h1
+      = featuredProducts.total_results_size + 'featured products:'
+
+    each product in featuredProducts.results
+      div
+        h2
+          a(href=pathTo('product', {id: product.id})) = product.getText('product.name')
+        img(data-src=product.getImageView('product.image', 'icon').url)
+
+    div
+      if (featuredProducts.page > 1)
+        if (featuredProducts.page > 2)
+          a(href=pathTo('search', {typ: 'product', tag: 'Featured', page: 1})) First
+        else
+          First
+
+        a(href="[%= pathTo('search', {typ: 'product', tag: 'Featured', page: featuredProducts.page-1}) %]") Previous
+      else
+        First | Previous
+
+      if (featuredProducts.page < featuredProducts.total_pages)
+        a(href="[%= pathTo('search', {typ: 'product', tag: 'Featured', page: featuredProducts.page+1}) %]") Next
+        if (featuredProducts.page < featuredProducts.total_pages-1)
+          a(href="[%= pathTo('search', {typ: 'product', tag: 'Featured', page: featuredProducts.total_pages}) %]") Last
+        else
+          Last
+      else
+        Next | Last
+
+    h1 And this is featured in our blog:
+    script(type='text/prismic-query', data-binding='blogPosts', data-form='blog').
+      [
+      [:d = at(document.tags, ["Featured"])]
+      ]
+
+    each post in blogPosts.results
+
+      article
+        h2
+          a(href=pathTo('blog/post', {id: post.id}))
+            post.getStructuredText('blog-post.body').getTitle().text
+          p
+            = post.getStructuredText('blog-post.body').getFirstParagraph().text
+          hr
+
+    include ./_footer.html

@@ -69,6 +69,7 @@ var winston = require('winston');
     this.dstDir = removeTrailingSlash(merge.dstDir || path.join(this.pwd, 'generated'));
     this.api = merge.api;
     this.urlBase = merge.urlBase;
+    this.engine = merge.engine;
     this.oauthClientId = merge.oauthClientId;
     // Ignore
     this.ignore = merge.ignore || [];

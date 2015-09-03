@@ -1,0 +1,14 @@
+doctype html
+html
+  head
+    title Your prismic.io singlepage project
+    script(src="https://prismicio.github.io/baked.js/baked-0.3.0.js")
+
+  body
+    div
+      a(href=pathTo('search', {typ: 'product', tag: 'Featured', page: 1})) Search
+
+    div
+      a(href=pathTo('blog/index')) blog
+
+    include _footer.html

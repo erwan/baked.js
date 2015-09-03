@@ -134,6 +134,7 @@ var Configuration = require("./configuration");
         },
         tmpl: src,
         api: router.api(src),
+        engine: ctx.engine,
         requestHandler: ctx.requestHandler,
         ref: process.env.BAKED_REF,
         accessToken: process.env.BAKED_ACCESS_TOKEN
