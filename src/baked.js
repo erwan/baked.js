@@ -62,7 +62,10 @@ var vm = require("vm");
     }
     ctx._sandbox.__render__ = function render() {
       delete ctx._sandbox.__render__;
-      return engine(content, ctx);
+      return engine(content, ctx).then(function(html) {
+        var scriptRx = /<script\s+type="text\/prismic-query"([^>]*)>([\s\S]*?)<\/script>/ig;
+        return html.replace(scriptRx, "");
+      });
     };
 
     return vm.runInContext("__render__()", ctx._sandbox);
