@@ -132,7 +132,8 @@ var Configuration = require("./configuration");
           partial: router.partialCb(src, env, readFileSync),
           require: router.requireCb(src, env, readFileSync)
         },
-        tmpl: src,
+        tmpl: content,
+        src: src,
         api: router.api(src),
         engine: ctx.engine,
         requestHandler: ctx.requestHandler,

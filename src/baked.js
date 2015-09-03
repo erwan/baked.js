@@ -53,6 +53,7 @@ var vm = require("vm");
     });
   }
 
+  // TODO: Remove script type="text/prismic-query" from the generated html
   function renderTemplate(content, ctx, engine) {
     // The vm context sandbox is kept separate from the template context to work around an issue
     // in earlier versions of node (pre v0.11.7) where escape() is added to the template context.
@@ -108,6 +109,7 @@ var vm = require("vm");
       accessToken: opts.accessToken,
       api: opts.api,
       tmpl: opts.tmpl,
+      src: opts.src,
       engine: consolidate[opts.engine || 'ejs'],
       setContext: opts.setContext || _.noop,
       requestHandler: opts.requestHandler
@@ -130,7 +132,8 @@ var vm = require("vm");
     // Extract the bindings
     conf.bindings = {};
     function toUpperCase(str, l) { return l.toUpperCase(); }
-    var scriptRx = /<script +type="text\/prismic-query"([^>]*)>([\s\S]*?)<\/script>/ig;
+    var scriptRx = opts.engine === 'jade' ? /script\(type='text\/prismic-query'([^\)]*)([^\n]*)/ig
+                                          : /<script +type="text\/prismic-query"([^>]*)>([\s\S]*?)<\/script>/ig;
     conf.tmpl = conf.tmpl.replace(scriptRx, function (str, scriptParams, scriptContent) {
       var dataRx = /data-([a-z0-9\-]+)="([^"]*)"/ig;
       var dataset = {};
@@ -161,7 +164,7 @@ var vm = require("vm");
         });
         conf.bindings[name] = binding;
       }
-      return str.replace(/.*/g, '');  // remove the <script> tag but preserve lines number
+      return str;
     });
 
     return conf;
@@ -254,7 +257,7 @@ var vm = require("vm");
           _.extend(documentSets, conf.args);
 
           conf.setContext(documentSets);
-          return renderContent(conf.tmpl, documentSets, conf.engine);
+          return renderContent(conf.src, documentSets, conf.engine);
         }).then(function(html) {
           var result = html.replace(/(<img[^>]*)data-src="([^"]*)"/ig, '$1src="$2"');
           return {api: api, content: result};

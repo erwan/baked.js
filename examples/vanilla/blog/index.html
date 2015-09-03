@@ -13,9 +13,9 @@
   </head>
   <body>
 
-    [%= urlToHere() %]<br>
-    [%= urlTo('/index') %]<br>
-    [%= urlTo('index') %]
+    <%= urlToHere() %><br>
+    <%= urlTo('/index') %><br>
+    <%= urlTo('index') %>
 
 
     <h1>Blog</h1>
@@ -26,22 +26,22 @@
       ]
     </script>
 
-    [% _.each(blogPosts.results, function(post) { %]
+    <% _.each(blogPosts.results, function(post) { %>
 
       <article>
         <h2>
-          <a href="[%= pathTo('post', {id: post.id}) %]">
-            [%= post.getStructuredText("blog-post.body").getTitle().text %]
+          <a href="<%= pathTo('post', {id: post.id}) %>">
+            <%= post.getStructuredText("blog-post.body").getTitle().text %>
           </a>
         </h2>
-        <p>[%= post.getStructuredText("blog-post.body").getFirstParagraph().text %]</p>
+        <p><%= post.getStructuredText("blog-post.body").getFirstParagraph().text %></p>
       </article>
 
       <hr>
 
-    [% }) %]
+    <% }) %>
 
-    [%- partial('/footer') %]
+    <% include ../_footer.html %>
 
   </body>
 </html>
