@@ -1,5 +1,7 @@
 var _ = require("lodash");
+var consolidate = require("consolidate");
 var ejs = require("ejs");
+var Promise = require("bluebird");
 var Prismic = require("prismic.io").Prismic;
 var Q = require("q");
 var vm = require("vm");
@@ -37,17 +39,29 @@ var vm = require("vm");
     });
   }
 
-  function renderTemplate(content, ctx) {
+  // Code from Consolidate.js to customize EJS templating (custom open/close for backward compat)
+
+  function promisify(fn, exec) {
+    return new Promise(function (res, rej) {
+      fn = fn || function (err, html) {
+        if (err) {
+          return rej(err);
+        }
+        res(html);
+      };
+      exec(fn);
+    });
+  }
+
+  function renderTemplate(content, ctx, engine) {
     // The vm context sandbox is kept separate from the template context to work around an issue
     // in earlier versions of node (pre v0.11.7) where escape() is added to the template context.
     if (!ctx._sandbox) {
       ctx._sandbox = vm.createContext(ctx);
     }
-    ejs.open = '[%';
-    ejs.close = '%]';
     ctx._sandbox.__render__ = function render() {
       delete ctx._sandbox.__render__;
-      return ejs.render(content, ctx);
+      return engine(content, ctx);
     };
 
     return vm.runInContext("__render__()", ctx._sandbox);
@@ -57,8 +71,8 @@ var vm = require("vm");
     return vm.runInContext(content, ctx._sandbox, filename);
   }
 
-  function renderContent(content, ctx) {
-    return renderTemplate(content, ctx);
+  function renderContent(content, ctx, engine) {
+    return renderTemplate(content, ctx, engine);
   }
 
   function renderQuery(query, env, api) {
@@ -94,9 +108,15 @@ var vm = require("vm");
       accessToken: opts.accessToken,
       api: opts.api,
       tmpl: opts.tmpl,
+      engine: consolidate[opts.engine || 'ejs'],
       setContext: opts.setContext || _.noop,
       requestHandler: opts.requestHandler
     };
+
+    if (opts.engine && !conf.engine) {
+      conf.logger.error("Unknown template engine: " + opts.engine);
+      return;
+    }
 
     // The Prismic.io API endpoint
     if (!conf.api) {
@@ -234,9 +254,9 @@ var vm = require("vm");
           _.extend(documentSets, conf.args);
 
           conf.setContext(documentSets);
-          var result = renderContent(conf.tmpl, documentSets)
-            .replace(/(<img[^>]*)data-src="([^"]*)"/ig, '$1src="$2"');
-
+          return renderContent(conf.tmpl, documentSets, conf.engine);
+        }).then(function(html) {
+          var result = html.replace(/(<img[^>]*)data-src="([^"]*)"/ig, '$1src="$2"');
           return {api: api, content: result};
         });
 
