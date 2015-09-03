@@ -13,7 +13,10 @@ html
     urlToHere()
 
     h1 Blog
-      script(type='text/prismic-query', data-binding='blogPosts', data-form='blog') [[:d = at(document.tags, ["Featured"])]]
+      script(type='text/prismic-query', data-binding='blogPosts', data-form='blog').
+        [
+          [:d = at(document.tags, ["Featured"])]
+        ]
       each post in blogPosts.results
         article
           h2

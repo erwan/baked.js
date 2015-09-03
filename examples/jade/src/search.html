@@ -58,7 +58,7 @@ html
       article
         h2
           a(href=pathTo('blog/post', {id: post.id}))
-            post.getStructuredText('blog-post.body').getTitle().text
+            = post.getStructuredText('blog-post.body').getTitle().text
           p
             = post.getStructuredText('blog-post.body').getFirstParagraph().text
           hr

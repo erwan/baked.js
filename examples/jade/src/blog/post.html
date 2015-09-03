@@ -1,0 +1,39 @@
+doctype html
+html
+  head
+    meta(charset='utf-8')
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    title Your prismic.io singlepage project
+    meta(name='description', content='')
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    meta(name='prismic-routing-pattern', content='$id')
+    meta(name='prismic-routing-param', content='id')
+    meta(property='og:url', content=urlToHere())
+    script(src='https://prismicio.github.io/baked.js/baked-0.3.0.js')
+
+  body
+    = pathToHere()
+    script(type='text/prismic-query', data-eager='true', data-binding='blogPosts').
+      [
+      [:d = any(document.id, ["$id"])]
+      ]
+    - var blogPost = blogPosts.results[0]
+    - var relatedPosts = _.chain(blogPost.getAll('blog-post.relatedpost'))
+         .map(function (link) { return blogPost.loadedDocuments[link.document.id] })
+         .compact()
+         .value()
+
+    h1
+      = blogPost.getStructuredText('blog-post.body').getTitle().text
+    article
+      = blogPost.getStructuredText('blog-post.body').getFirstParagraph().text
+    br
+    if (relatedPosts.length > 0)
+      div
+        Related posts:
+        ul
+          each relatedPost in relatedPosts
+            li
+              = relatedPost.getStructuredText('blog-post.body').getTitle().text
+
+    include ../_footer.html

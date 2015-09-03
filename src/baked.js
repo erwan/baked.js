@@ -101,6 +101,93 @@ var vm = require("vm");
     });
   }
 
+  // Extract bindings from str, return an array of the form:
+  // [{
+  //   attributes: {},
+  //   content: "[[(:d = at(document.type, "article"))]]"
+  // }, {
+  //   ..
+  // }]
+  function findBindings(str, args, engine) {
+    function toUpperCase(str, l) { return l.toUpperCase(); }
+    // Because Jade is about indentation, we need a line-by-line parser
+    // instead of the regexp parser
+    var scriptRx;
+    var match;
+    var bindings = [];
+    if (engine === 'jade') {
+      scriptRx = /script\(type='text\/prismic-query'([^\)]*)\)\./i;
+      var lines = str.split('\n');
+      var currentBinding = null;
+      _.forEach(lines, function(line) {
+        if ((match = scriptRx.exec(line)) !== null) {
+          // New script line
+          currentBinding = {
+            indent: line.indexOf('script'),
+            attributes: _.reduce(match[1].split(","), function(acc, attr) {
+              var splitted = attr.split('=');
+              if (splitted.length === 2) {
+                acc[splitted[0].trim().replace(/^data-/, '')] = splitted[1].trim().slice(1, -1);
+              }
+              return acc;
+            }, {}),
+            content: ""
+          };
+        } else if (currentBinding && line.match(/^\s*/)[0].length > currentBinding.indent) {
+          currentBinding.content = currentBinding.content + line;
+        } else if (currentBinding) {
+          bindings.push(currentBinding);
+          currentBinding = null;
+        }
+      });
+    } else {
+      scriptRx = /<script +type="text\/prismic-query"([^>]*)>([\s\S]*?)<\/script>/ig;
+      str.replace(scriptRx, function (str, scriptParams, scriptContent) {
+        var dataRx = /data-([a-z0-9\-]+)=("[^"]*"|'[^']*')/ig;
+        var attributes = {};
+        while ((match = dataRx.exec(scriptParams)) !== null) {
+          var attribute = match[1].toLowerCase();
+          var value = match[2].slice(1, -1); // Remove quotes or double quotes
+          var key;
+          attributes[attribute] = value;
+        }
+        bindings.push({
+          attributes: attributes,
+          content: scriptContent
+        });
+        return str;
+      });
+    }
+
+    return _.reduce(bindings, function(acc, binding) {
+      var params = {};
+      var dataset = {};
+
+      _.forEach(binding.attributes, function(value, attribute) {
+        var key;
+        if (/^query-/.test(attribute)) {
+          key = attribute.replace(/^query-/, '').replace(/-(.)/g, toUpperCase);
+          params[key] = value;
+        } else {
+          key = attribute.replace(/-(.)/g, toUpperCase);
+          dataset[key] = value;
+        }
+      });
+      var name = dataset.binding;
+      if (name) {
+        _.assign(binding, {
+          form: dataset.form || 'everything',
+          dataset: dataset,
+          render: function(api) {
+            return renderQuery(binding.content, args, api);
+          }
+        });
+        acc[name] = binding;
+      }
+      return acc;
+    }, {});
+  }
+
   function initConf(opts) {
     var conf = {
       mode: opts.mode,
@@ -132,43 +219,7 @@ var vm = require("vm");
       return;
     }
 
-    // Extract the bindings
-    conf.bindings = {};
-    function toUpperCase(str, l) { return l.toUpperCase(); }
-    var scriptRx = opts.engine === 'jade' ? /script\(type='text\/prismic-query'([^\)]*)([^\n]*)/ig
-                                          : /<script +type="text\/prismic-query"([^>]*)>([\s\S]*?)<\/script>/ig;
-    conf.tmpl = conf.tmpl.replace(scriptRx, function (str, scriptParams, scriptContent) {
-      var dataRx = /data-([a-z0-9\-]+)="([^"]*)"/ig;
-      var dataset = {};
-      var match;
-      var binding = {
-        params: {}
-      };
-      while ((match = dataRx.exec(scriptParams)) !== null) {
-        var attribute = match[1].toLowerCase();
-        var value = match[2];
-        var key;
-        if (/^query-/.test(attribute)) {
-          key = attribute.replace(/^query-/, '').replace(/-(.)/g, toUpperCase);
-          binding.params[key] = value;
-        } else {
-          key = attribute.replace(/-(.)/g, toUpperCase);
-          dataset[key] = value;
-        }
-      }
-      var name = dataset.binding;
-      if (name) {
-        _.assign(binding, {
-          form: dataset.form || 'everything',
-          dataset: dataset,
-          render: function(api) {
-            return renderQuery(scriptContent, conf.args, api);
-          }
-        });
-        conf.bindings[name] = binding;
-      }
-      return str;
-    });
+    conf.bindings = findBindings(conf.tmpl, conf.args, opts.engine);
 
     return conf;
   }
