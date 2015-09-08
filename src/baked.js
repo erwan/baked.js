@@ -1,10 +1,9 @@
 var _ = require("lodash");
-var consolidate = require("consolidate");
-var ejs = require("ejs");
 var Promise = require("bluebird");
 var Prismic = require("prismic.io").Prismic;
 var Q = require("q");
 var vm = require("vm");
+var templating = require("./templating");
 
 (function (exporter, undefined) {
   "use strict";
@@ -53,30 +52,9 @@ var vm = require("vm");
     });
   }
 
-  // TODO: Remove script type="text/prismic-query" from the generated html
-  function renderTemplate(content, ctx, engine) {
-    // The vm context sandbox is kept separate from the template context to work around an issue
-    // in earlier versions of node (pre v0.11.7) where escape() is added to the template context.
-    if (!ctx._sandbox) {
-      ctx._sandbox = vm.createContext(ctx);
-    }
-    ctx._sandbox.__render__ = function render() {
-      delete ctx._sandbox.__render__;
-      return engine(content, ctx).then(function(html) {
-        var scriptRx = /<script\s+type="text\/prismic-query"([^>]*)>([\s\S]*?)<\/script>/ig;
-        return html.replace(scriptRx, "");
-      });
-    };
-
-    return vm.runInContext("__render__()", ctx._sandbox);
-  }
 
   function requireFile(content, ctx, filename) {
     return vm.runInContext(content, ctx._sandbox, filename);
-  }
-
-  function renderContent(content, ctx, engine) {
-    return renderTemplate(content, ctx, engine);
   }
 
   function renderQuery(query, env, api) {
@@ -108,14 +86,14 @@ var vm = require("vm");
   // }, {
   //   ..
   // }]
-  function findBindings(str, args, engine) {
+  function findBindings(str, args, isJade) {
     function toUpperCase(str, l) { return l.toUpperCase(); }
     // Because Jade is about indentation, we need a line-by-line parser
     // instead of the regexp parser
     var scriptRx;
     var match;
     var bindings = [];
-    if (engine === 'jade') {
+    if (isJade) {
       scriptRx = /script\(type='text\/prismic-query'([^\)]*)\)\./i;
       var lines = str.split('\n');
       var currentBinding = null;
@@ -200,7 +178,6 @@ var vm = require("vm");
       api: opts.api,
       tmpl: opts.tmpl,
       src: opts.src,
-      engine: consolidate[opts.engine || 'ejs'],
       setContext: opts.setContext || _.noop,
       requestHandler: opts.requestHandler
     };
@@ -219,7 +196,7 @@ var vm = require("vm");
       return;
     }
 
-    conf.bindings = findBindings(conf.tmpl, conf.args, opts.engine);
+    conf.bindings = findBindings(conf.tmpl, conf.args, conf.src.endsWith('.jade'));
 
     return conf;
   }
@@ -311,7 +288,7 @@ var vm = require("vm");
           _.extend(documentSets, conf.args);
 
           conf.setContext(documentSets);
-          return renderContent(conf.src, documentSets, conf.engine);
+          return templating.render(conf.src, documentSets, conf);
         }).then(function(html) {
           var result = html.replace(/(<img[^>]*)data-src="([^"]*)"/ig, '$1src="$2"');
           return {api: api, content: result};
@@ -352,7 +329,6 @@ var vm = require("vm");
   exporter.initConf = initConf;
   exporter.parseRoutingInfos = parseRoutingInfos;
   exporter.renderRoute = renderRoute;
-  exporter.renderTemplate = renderTemplate;
   exporter.requireFile = requireFile;
 
 }(typeof exports === 'object' && exports ? exports : (typeof module === "object" && module && typeof module.exports === "object" ? module.exports : window)));

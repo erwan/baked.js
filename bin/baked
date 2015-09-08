@@ -9,8 +9,7 @@ var url = require('url');
 var Q = require('q');
 var _ = require('lodash');
 
-// polyfill
-require("../src/ext/starts_with");
+require("../src/ext/string_polyfill");
 
 var cli = require('../src/cli');
 var Configuration = require('../src/configuration');

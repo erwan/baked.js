@@ -2,6 +2,7 @@ var Q = require("q");
 var _ = require("lodash");
 
 var baked = require("./baked");
+var templating = require("./templating");
 
 (function (Global, undefined) {
   "use strict";
@@ -325,11 +326,12 @@ var baked = require("./baked");
   }
 
   Router.prototype.partialCb = function(src, env, readFile) {
+    // Only used with legacy templates
     var _this = this;
     return function (name) {
       var partial = getPartialPath(_this, name, src);
       var content = readFile(partial);
-      return baked.renderTemplate(content, env.ctx);
+      return templating.legacy(content, env.ctx);
     };
   };
 
