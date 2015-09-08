@@ -6,6 +6,7 @@ var util = require("util");
 var Q = require("q");
 var _ = require("lodash");
 var moment = require("moment");
+var consolidate = require("consolidate");
 
 var baked = require("./baked");
 var Router = require("./router");
@@ -231,8 +232,8 @@ var Configuration = require("./configuration");
         })
         .then(function (names) {
           return sequence(names, function (name) {
-            var dstName = name.endsWith(".html") || name.endsWith(".xml") ? name
-                        : name.replace(/\.\w+$/, ".html");
+            var extension = name.split('.').pop();
+            var dstName = consolidate[extension] ? name.replace(/\.\w+$/, ".html") : name;
             var src = srcDir + "/" + name;
             var dst = dstDir + "/" + dstName;
             return Q

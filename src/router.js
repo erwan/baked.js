@@ -68,7 +68,7 @@ var templating = require("./templating");
   Router.prototype.cleanFilename = function(src) {
     return src
       .replace(this.srcDir, '')
-      .replace(/\.html$/, '');
+      .replace(/\.\w+$/, '');
   };
 
   Router.prototype.isBakedTemplate = function (file) {
@@ -189,7 +189,7 @@ var templating = require("./templating");
       var filename = router.filename(fileFromHere, parsedArgs, here_dst);
       filename = findFileFromHere(filename, here_dst);
       addGeneratedRoute(router, filename, call, here_dst, fileFromHere, here_src);
-      var path = filename.replace(/\/index\.html$/, '/');
+      var path = filename.replace(/\/index\.\w+$/, '/');
       if (isUrl) {
         if (!params.url) {
           throw new Error("Can't build an URL without 'prismic-url-base' param");
@@ -228,7 +228,7 @@ var templating = require("./templating");
   Router.prototype.pathToHereStaticCb = function (here_src, here_dst, args) {
     var _this = this;
     return function () {
-      var file = here_src.replace(_this.srcDir, '').replace(/\.html$/, '');
+      var file = here_src.replace(_this.srcDir, '').replace(/\.\w+$/, '');
       return _this.pathToStatic(file, args, here_src, here_dst);
     };
   };
@@ -236,7 +236,7 @@ var templating = require("./templating");
   Router.prototype.urlToHereStaticCb = function (here_src, here_dst, args) {
     var _this = this;
     return function () {
-      var file = here_src.replace(_this.srcDir, '').replace(/\.html$/, '');
+      var file = here_src.replace(_this.srcDir, '').replace(/\.\w+$/, '');
       return _this.urlToStatic(file, args, here_src, here_dst);
     };
   };
@@ -272,8 +272,13 @@ var templating = require("./templating");
       // nothing to do
     } else if (/\/index?$/.test(route)) {
       route += ".html";
-    } else if (!/\.html$/.test(route)) {
-      route += "/index.html";
+    } else {
+      var ext = route.split('.').pop();
+      if (consolidate[ext]) {
+        route = route.replace(/\.\w+$/, '.html');
+      } else if (ext !== 'html') {
+        route += "/index.html";
+      }
     }
     return route;
   }
