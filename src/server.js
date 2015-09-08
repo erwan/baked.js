@@ -231,8 +231,10 @@ var Configuration = require("./configuration");
         })
         .then(function (names) {
           return sequence(names, function (name) {
+            var dstName = name.endsWith(".html") || name.endsWith(".xml") ? name
+                        : name.replace(/\.\w+$/, ".html");
             var src = srcDir + "/" + name;
-            var dst = dstDir + "/" + name;
+            var dst = dstDir + "/" + dstName;
             return Q
               .ninvoke(fs, 'lstat', src)
               .then(function (stats) {

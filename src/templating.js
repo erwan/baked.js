@@ -23,21 +23,21 @@ var consolidate = require("consolidate");
     ctx._sandbox.__render__ = function render() {
       delete ctx._sandbox.__render__;
       var resultP;
-      if (path.endsWith('.html') || path.endsWith('.xml')) {
+      var parts = path.split(".");
+      var ext = parts[parts.length - 1];
+      if (ext == 'html' || ext == 'xml') {
         resultP = Q
           .ninvoke(fs, 'readFile', path, "utf8")
           .then(function (content) {
             return legacyRendering(content, ctx);
           });
       } else {
-        var parts = path.split(".");
-        var engineName = parts[parts.length - 1];
-        var engine = consolidate[engineName];
+        var engine = consolidate[ext];
         if (!engine) {
           if (conf && conf.logger) {
-            conf.logger.error("Unknown template engine: " + engineName);
+            conf.logger.error("Unknown template engine: " + ext);
           } else {
-            console.log("Unknown template engine: " + engineName);
+            console.log("Unknown template engine: " + ext);
           }
         }
         resultP = engine(path, ctx);

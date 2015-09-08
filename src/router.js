@@ -2,6 +2,7 @@ var Q = require("q");
 var _ = require("lodash");
 
 var baked = require("./baked");
+var consolidate = require("consolidate");
 var templating = require("./templating");
 
 (function (Global, undefined) {
@@ -35,11 +36,24 @@ var templating = require("./templating");
   };
 
   function isTemplate(file) {
-      return /\.(x|ht)ml$/.test(_.last(els(file)));
+    var parts = file.split(".");
+    var ext = parts[parts.length - 1];
+    // Valid template = .html, .xml, or a supported template engine
+    return ext === 'html' || ext === 'xml' || consolidate[ext];
   }
 
-  function srcForFile(router, file) {
-    if (!/\.(x|ht)ml$/.test(file)) file += '.html';
+  function srcForFile(router, input) {
+    var file;
+    if (isTemplate(input)) {
+      file = input;
+    } else {
+      file = _(router.params).keys().find(function (f) {
+        return f.replace(router.srcDir, '').replace(/\.\w+$/, '') === input;
+      }).replace(router.srcDir, '');
+    }
+    if (!file) {
+      file = input + ".html";
+    }
     return router.srcDir.replace(/\/$/, '') + '/' + file.replace(/^\//, '');
   }
 
