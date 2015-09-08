@@ -6,8 +6,8 @@ html
     title Your prismic.io singlepage project
     meta(name='description', content='')
     meta(name='viewport', content='width=device-width, initial-scale=1')
-    meta(name='prismic-routing-pattern', content='/blog.html')
-    meta(property='og:url', content='[%= urlToHere() %]')
+    meta(name='prismic-routing-pattern', content='/blog.jade')
+    meta(property='og:url', content=urlToHere())
     script(src='https://prismicio.github.io/baked.js/baked-0.3.0.js')
 
     urlToHere()
@@ -20,9 +20,11 @@ html
       each post in blogPosts.results
         article
           h2
-            a(href="[%= pathTo('post', {id: post.id}) %]") [%= post.getStructuredText(&quot;blog-post.body&quot;).getTitle().text %]
+            a(href=pathTo('post', {id: post.id}))
+              = post.getStructuredText('blog-post.body').getTitle().text
 
-          p [%= post.getStructuredText(&quot;blog-post.body&quot;).getFirstParagraph().text %]
+          p
+            = post.getStructuredText('blog-post.body').getFirstParagraph().text
 
           hr
 

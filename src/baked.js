@@ -300,9 +300,17 @@ var templating = require("./templating");
 
   function parseRoutingInfos(content, ctx) {
     var rxAPI = /<meta +name="prismic-api" +content="([^"]+)" *>/ig;
+    var rxAPIJade = / +meta\(name='prismic-api', +content='([^']+)'\)/ig;
+
     var rxParam = /<meta +name="prismic-routing-param" +content="([a-z][a-z0-9]*)" *>/ig;
+    var rxParamJade = / +meta\(name='prismic-routing-param', +content='([a-z][a-z0-9]*)'\)/ig;
+
     var rxPattern = /<meta +name="prismic-routing-pattern" +content="([\/$a-z][\/${}a-z0-9._-]*)" *>/ig;
+    var rxPatternJade = / +meta\(name='prismic-routing-pattern', +content='([\/$a-z][\/${}a-z0-9._-]*)'\)/ig;
+
     var rxURLBase = /<meta +name="prismic-url-base" +content="([^"]+)" *>/ig;
+    var rxURLBaseJade = / +meta\(name='prismic-url-base', +content='([^']+)'\)/ig;
+
     var match;
     var res = {
       api: ctx.api,
@@ -311,15 +319,24 @@ var templating = require("./templating");
     };
     if ((match = rxAPI.exec(content)) !== null) {
       res.api = match[1];
+    } else if ((match = rxAPIJade.exec(content)) !== null) {
+      res.api = match[1];
     }
     if (!res.api) { return null; }  // no api == no template
     while ((match = rxParam.exec(content)) !== null) {
       res.params.push(match[1]);
     }
+    while ((match = rxParamJade.exec(content)) !== null) {
+      res.params.push(match[1]);
+    }
     if ((match = rxPattern.exec(content)) !== null) {
+      res.route = match[1];
+    } else if ((match = rxPatternJade.exec(content)) !== null) {
       res.route = match[1];
     }
     if ((match = rxURLBase.exec(content)) !== null) {
+      res.url = match[1];
+    } else if ((match = rxURLBaseJade.exec(content)) !== null) {
       res.url = match[1];
     }
     return res;
