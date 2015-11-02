@@ -11,7 +11,7 @@ html
     meta(name='prismic-routing-param', content='typ')
     meta(name='prismic-routing-param', content='tag')
     meta(name='prismic-routing-param', content='page')
-    meta(property='og:url', content='[%= urlToHere() %]')
+    meta(property='og:url', content=urlToHere())
     script(src='https://prismicio.github.io/baked.js/baked-0.3.0.js')
 
   body
@@ -24,7 +24,8 @@ html
     each product in featuredProducts.results
       div
         h2
-          a(href=pathTo('product', {id: product.id})) = product.getText('product.name')
+          a(href=pathTo('product', {id: product.id}))
+            = product.getText('product.name')
         img(data-src=product.getImageView('product.image', 'icon').url)
 
     div
@@ -59,8 +60,8 @@ html
         h2
           a(href=pathTo('blog/post', {id: post.id}))
             = post.getStructuredText('blog-post.body').getTitle().text
-          p
-            = post.getStructuredText('blog-post.body').getFirstParagraph().text
-          hr
+        p
+          = post.getStructuredText('blog-post.body').getFirstParagraph().text
+        hr
 
     include ./_footer.jade

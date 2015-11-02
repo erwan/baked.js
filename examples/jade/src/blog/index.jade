@@ -17,15 +17,15 @@ html
         [
           [:d = at(document.tags, ["Featured"])]
         ]
-      each post in blogPosts.results
-        article
-          h2
-            a(href=pathTo('post', {id: post.id}))
-              = post.getStructuredText('blog-post.body').getTitle().text
+    each post in blogPosts.results
+      article
+        h2
+          a(href=pathTo('post', {id: post.id}))
+            = post.getStructuredText('blog-post.body').getTitle().text
 
-          p
-            = post.getStructuredText('blog-post.body').getFirstParagraph().text
+        p
+          = post.getStructuredText('blog-post.body').getFirstParagraph().text
 
-          hr
+        hr
 
     include ../_footer.jade
